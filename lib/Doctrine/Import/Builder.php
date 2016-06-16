@@ -660,18 +660,24 @@ class Doctrine_Import_Builder extends Doctrine_Builder
                 {
                     if (strpos($name, ' as')) {
                         $parts = explode(' as ', $name);
-                    } else {
+                    }
+                    else
+                    {
                         $parts = explode(' AS ', $name);
                     }
 
                     if (count($parts) > 1) {
                         $fieldName = $parts[1];
-                    } else {
+                    }
+                    else
+                    {
                         $fieldName = $parts[0];
                     }
 
                     $name = $parts[0];
-                } else {
+                }
+                else
+                {
                     $fieldName = $name;
                     $name = $name;
                 }
@@ -679,6 +685,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
                 $phpTypeMap = array(
                     "enum"      => "string",
                     "datetime"  => "string",
+                    "timestamp"  => "string",
                     "clob"      => "string",
                     "date"      => "string",
                     "time"      => "string",
@@ -699,9 +706,10 @@ class Doctrine_Import_Builder extends Doctrine_Builder
                  * @var double $phpCommentMap;
                  */
                 $phpCommentMap = array(
-                    "time"  => "Time in ISO-8601 format (HH:MI:SS) format",
-                    "date"  => "Date in ISO-8601 format (YYYY-MM-DD) format",
-                    "datetime"  => "Date and time in ISO-8601 format (YYYY-MM-DD HH:MI) format",
+                    "time"  => "Time in ISO-8601 format (HH:MI:SS)",
+                    "date"  => "Date in ISO-8601 format (YYYY-MM-DD)",
+                    "datetime"  => "Date and time in ISO-8601 format (YYYY-MM-DD HH:MI)",
+                    "timestamp" =>  "Timestamp in ISO-8601 format (YYYY-MM-DD HH:MI:SS)",
                     "gzip"      => "A gzipped object",
                     "object"    => "A doctrine serialized object",
                     "enum"      => "Possible values (%s)"
@@ -720,10 +728,14 @@ class Doctrine_Import_Builder extends Doctrine_Builder
                     if (isset($column["fixed"]) && $column["fixed"] == true)
                     {
                         $commentOptions[] = sprintf("Type: %s(%s) fixed-size", $column["type"], $column["length"]);
-                    } else {
+                    }
+                    else
+                    {
                         $commentOptions[] = sprintf("Type: %s(%s)", $column["type"], $column["length"]);
                     }
-                } else {
+                }
+                else
+                {
                     $commentOptions[] = sprintf("Type: %s", $column["type"]);
                 }
 
@@ -761,7 +773,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
 
                 $fieldName = trim($fieldName);
 
-                $properties[] = array($phpType, $fieldName, "");
+                $properties[] = array($phpType, $fieldName, $comment);
                 $getters[] = array($phpType, Doctrine_Inflector::classify($fieldName), $comment);
                 $setters[] = array($definition['topLevelClassName'], Doctrine_Inflector::classify($fieldName), $phpType, $comment);
             }
@@ -774,7 +786,9 @@ class Doctrine_Import_Builder extends Doctrine_Builder
                         $properties[] = array($relation['class'], $relation['alias'], "");
                         $getters[] = array($relation['class'], $relation['alias'], "");
                         $setters[] = array($definition['topLevelClassName'], $relation['alias'], $relation['class'], "");
-                    } else {
+                    }
+                    else
+                    {
                         // MANY
                         $properties[] = array($type . "|". $relation['class'] . "[]", $relation['alias'] , "");
                         $getters[] = array($type . "|".  $relation['class'] . "[]", $relation['alias'], "");
@@ -804,23 +818,27 @@ class Doctrine_Import_Builder extends Doctrine_Builder
                 $maxNameSize = max($maxNameSize, strlen($setterItem[1])+strlen($setterItem[2])+9);
             }
 
+            $maxNameSize+=1;
+            $maxTypeSize+=1;
+
+
             foreach ($properties as $propItem)
             {
-                $ret[] = sprintf("@property %s %s %s", str_pad($propItem[0], $maxTypeSize, " "), str_pad($propItem[1], $maxNameSize, " "), $propItem[2]);
+                $ret[] = sprintf("@property %s $%s %s", str_pad($propItem[0], $maxTypeSize, " "), str_pad($propItem[1], $maxNameSize-1, " "), $propItem[2]);
             }
             $ret[] = " ";
 
             foreach ($getters as $getterItem)
             {
-                $methodName = sprintf("get%s()",$getterItem[1]);
-                $ret[] = sprintf("@method %s %s %s", str_pad($getterItem[0], $maxTypeSize+2, " "), str_pad($methodName, $maxNameSize, " "), $getterItem[2]);
+                $methodName = sprintf("get%s()",ucfirst($getterItem[1]));
+                $ret[] = sprintf("@method %s %s %s", str_pad($getterItem[0], $maxTypeSize+2, " "), str_pad(($methodName), $maxNameSize, " "), $getterItem[2]);
             }
             $ret[] = " ";
 
             foreach ($setters as $setterItem)
             {
-                $methodName = sprintf('set%s(%s $val)',$setterItem[1], $setterItem[2]);
-                $ret[] = sprintf("@method %s %s %s", str_pad($setterItem[0], $maxTypeSize+2, " "), str_pad($methodName, $maxNameSize, " "), $setterItem[3]);
+                $methodName = sprintf('set%s(%s $val)',ucfirst($setterItem[1]), $setterItem[2]);
+                $ret[] = sprintf("@method %s %s %s", str_pad($setterItem[0], $maxTypeSize+2, " "), str_pad(($methodName), $maxNameSize, " "), $setterItem[3]);
             }
             //$ret = array_merge($ret, $getter, $setter);
         }
