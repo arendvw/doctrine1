@@ -13,10 +13,6 @@
         {
             "name": "Jonathan Wage",
             "email": "jonwage@gmail.com"
-        },
-        {
-            "name": "Doctrine1 Contributors",
-            "homepage": "https://github.com/FriendsOfSymfony1/doctrine1/graphs/contributors"
         }
     ],
     "require": {
